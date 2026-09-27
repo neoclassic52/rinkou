@@ -14,7 +14,7 @@
   ]
  };
  // Announcer lines (Higgsfield Seed Audio, voice "Xenia", echo baked in).
- const VOICES=['start','speedup','powerup','evolution','phoenix','goddess','maxpower','bomb','warning','sector','shield','lastshield','clear','gameover'];
+ const VOICES=['start','speedup','powerup','evolution','phoenix','goddess','maxpower','bomb','warning','sector','shield','lastshield','clear','gameover','bombget','shieldget'];
  // Recorded effects (sfx/se_*.wav): game sound name -> [file, gain]. Anything without a file uses the synth below.
  const SFX={shot:['shot',.2],laser:['laser',.3],explosion:['explosion_s',.5],boom:['explosion_l',.8],power:['evolution',.85],upgrade:['powerup',.6],pickup:['item',.55],bomb:['bomb',.9],damage:['damage',.8],warning:['warning',.5],clear:['clear',.8],clink:['clink',.45],charge:['charge',.45],beam:['beam',.6],whoosh:['sector',.55],gem:['gem',.3],phase:['phase',.85],bossdown:['boss_down',1]};
  const SFX_GAP={explosion:.03,boom:.05,clink:.06};
@@ -44,14 +44,12 @@
    if(!embedded&&location.protocol==='file:')return;
    for(const file of new Set(Object.values(SFX).map(v=>v[0]))){const src=embedded?.[file]||`sfx/se_${file}.wav`;fetch(src).then(r=>{if(!r.ok)throw Error('sfx');return r.arrayBuffer();}).then(b=>this.ctx.decodeAudioData(b)).then(buf=>this.sfxBuffers.set(file,buf)).catch(()=>{});}
   },
-  // The laser hum loops while the beam is firing and fades out shortly after the last call.
+  // While the beam fires, the laser sound pulses once every 0.5 s rather than droning continuously.
   laserHum(level){
-   const buf=this.sfxBuffers.get(SFX.laser[0]);if(!buf)return false;const c=this.ctx;this.laserSeen=c.currentTime;
-   if(!this.laserSrc){const s=c.createBufferSource(),g=c.createGain();s.buffer=buf;s.loop=true;g.gain.setValueAtTime(0,c.currentTime);g.gain.linearRampToValueAtTime(SFX.laser[1],c.currentTime+.04);s.connect(g);g.connect(this.fx);s.start();this.laserSrc=s;this.laserGain=g;
-    this.laserTimer=setInterval(()=>{if(this.ctx.state==='running'&&this.ctx.currentTime-this.laserSeen>.25)this.stopLaser();},100);}
-   this.laserSrc.playbackRate.setTargetAtTime(1+level*.04,c.currentTime,.1);return true;
+   const buf=this.sfxBuffers.get(SFX.laser[0]);if(!buf)return false;const c=this.ctx,t=c.currentTime;if(t-(this.laserLast??-9)<.44)return true;this.laserLast=t;
+   const s=c.createBufferSource(),g=c.createGain();s.buffer=buf;s.playbackRate.value=1+level*.04;g.gain.value=SFX.laser[1];s.connect(g);g.connect(this.fx);s.start(t);this.laserSrc=s;this.laserGain=g;s.onended=()=>{s.disconnect();g.disconnect();if(this.laserSrc===s)this.laserSrc=null;};return true;
   },
-  stopLaser(){if(this.laserTimer){clearInterval(this.laserTimer);this.laserTimer=null;}if(!this.laserSrc)return;const s=this.laserSrc,g=this.laserGain,t=this.ctx.currentTime;this.laserSrc=null;g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(0,t,.03);s.stop(t+.2);s.onended=()=>{s.disconnect();g.disconnect();};},
+  stopLaser(){if(!this.laserSrc)return;const s=this.laserSrc,g=this.laserGain,t=this.ctx.currentTime;this.laserSrc=null;g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(0,t,.03);try{s.stop(t+.2);}catch{}},
   loadVoices(){
    if(this.voicesRequested)return;this.voicesRequested=true;const embedded=window.RinkouVoiceConfig;
    if(!embedded&&location.protocol==='file:')return;

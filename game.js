@@ -47,7 +47,7 @@
  // First sighting of each species gets a short dossier card.
  function introduce(type){const s=foes.species(type);if(!s||s.hidden||seen.has(type))return;seen.add(type);const el=$('enemyIntro');el.querySelector('b').textContent=s.name;el.querySelector('span').textContent=s.jp;el.querySelector('p').textContent=s.info;el.style.setProperty('--foe',s.color);el.classList.add('show');introTimer=3.4;}
  function setBossHud(def){$('bossHud').querySelector('span').textContent=`WARNING / ${def.name} · ${def.jp}`;$('bossHealth').style.width='100%';setVisible('bossHud',true);}
- function reset(){starOffset=0;backgroundSpeed=WEAPON_STEPS[0].travelSpeed;acceleration=0;time=0;lastHud=0;score=0;kills=0;combo=0;maxCombo=0;comboTime=0;level=0;power=0;waveIndex=0;zone=0;boss=null;midboss=null;bossWarning=false;midWarning=false;midDone=false;warnBand=0;enemies=[];bullets=[];shots=[];pickups=[];particles=[];rings=[];floats=[];flashes=[];gems=[];hazards=[];ghosts=[];tipTrail=[[],[]];beamTargets=[];seen.clear();introTimer=0;$('enemyIntro').classList.remove('show');touches.clear();activeTouch=null;keys.clear();shake=0;flash=0;bombLight=0;shootTimer=0;spawnTimer=1;nextPowerAt=POWER_INTERVAL;bombTimer=19;healTimer=43;endingTimer=0;stats={shots:0,bombs:0,powerups:0};player={x:W*.5,y:H*.76,tx:W*.5,ty:H*.76,lives:3,bombs:3,inv:2};motion={vx:0,vy:0,bank:0,thrust:0};roll=0;depthTilt=0;mouseAt=null;env=makeEnv();$('bossHud').classList.add('hidden');}
+ function reset(){starOffset=0;backgroundSpeed=WEAPON_STEPS[0].travelSpeed;acceleration=0;time=0;lastHud=0;score=0;kills=0;combo=0;maxCombo=0;comboTime=0;level=0;power=0;waveIndex=0;zone=0;boss=null;midboss=null;bossWarning=false;midWarning=false;midDone=false;warnBand=0;enemies=[];bullets=[];shots=[];pickups=[];particles=[];rings=[];floats=[];flashes=[];gems=[];hazards=[];ghosts=[];tipTrail=[[],[]];beamTargets=[];seen.clear();introTimer=0;$('enemyIntro').classList.remove('show');touches.clear();activeTouch=null;keys.clear();shake=0;flash=0;bombLight=0;shootTimer=0;spawnTimer=1;nextPowerAt=POWER_INTERVAL;bombTimer=19;healTimer=43;endingTimer=0;stats={shots:0,bombs:0,powerups:0};player={x:W*.5,y:H*.76,tx:W*.5,ty:H*.76,lives:3,bombs:3,inv:2};motion={vx:0,vy:0,bank:0,thrust:0};roll=0;depthTilt=0;beamTips=[];mouseAt=null;env=makeEnv();$('bossHud').classList.add('hidden');}
  async function start(){
   if(mode==='playing'||mode==='starting')return;
   const request=++launchRequest,previousMode=mode;mode='starting';
@@ -69,7 +69,7 @@
  function float(x,y,text,color=palette[route]){floats.push({x,y,text,color,life:1.3});}
  function explode(x,y,color,size=1){addParticles(x,y,color,Math.round(20*size),Math.min(size,2.6));addParticles(x,y,'#fff4e0',Math.round(7*size),Math.min(size,2.6)*.7);flashes.push({x,y,r:24*size+10,life:.32,max:.32,color});ring(x,y,color,36*size+18,.32+size*.08);}
  function spawnPickup(type,x,y){pickups.push({type,x,y,vy:68,r:17,life:18,p:rand(0,TAU)});}
- function collect(p){if(p.dead)return;p.dead=true;if(p.type!=='power')audio.sfx('pickup');addParticles(p.x,p.y,p.type==='bomb'?palette.bomb:palette[route],40,1.1);ring(player.x,player.y,palette[route],160,.7);
+ function collect(p){if(p.dead)return;p.dead=true;if(p.type==='bomb')audio.voice('bombget',{priority:2});else if(p.type==='heal')audio.voice('shieldget',{priority:2});addParticles(p.x,p.y,p.type==='bomb'?palette.bomb:palette[route],40,1.1);ring(player.x,player.y,palette[route],160,.7);
   if(p.type==='power'){if(power<MAX_POWER){const previousLevel=level;power++;acceleration=reduced?0:1;roll=reduced?0:1;stats.powerups++;level=Math.floor(power/3);const changed=level!==previousLevel;updateTrack(changed);audio.sfx(changed?'power':'upgrade');if(changed){audio.voice('evolution',{priority:3});if(level===2)audio.voice(route==='spread'?'phoenix':'goddess',{delay:1.05,priority:4});}else audio.voice(power===MAX_POWER?'maxpower':power%3===1?'speedup':'powerup',{priority:3});flash=changed?.12:.05;shake=changed?4:2;player.inv=Math.max(player.inv,1.3);announce(changed?`MUSIC CHANGE / TRACK ${level+1}`:'WEAPON UPGRADE / 曲はそのまま続く',`${route.toUpperCase()} ${WEAPON_STEPS[power].version} / ${forms.describe(route,power).name}`,changed?2.4:1.4);float(p.x,p.y,changed?'MUSIC + POWER UP':'POWER UP');}else{score+=2000;audio.sfx('pickup');float(p.x,p.y,'MAX POWER +2000');}}
   if(p.type==='bomb'){if(player.bombs<5){player.bombs++;float(p.x,p.y,'BOMB +1',palette.bomb);}else{score+=1000;float(p.x,p.y,'BOMB MAX +1000',palette.bomb);}}
   if(p.type==='heal'){if(player.lives<3){player.lives++;float(p.x,p.y,'SHIELD +1');}else{score+=1000;float(p.x,p.y,'SHIELD MAX +1000');}}updateHud();
@@ -104,7 +104,11 @@
  function shipTilt(){return (player.tx-player.x)*.003;}
  // Same transform as forms.draw: rotate by tilt, squash horizontally for bank / roll.
  function worldPort(p){const a=shipTilt(),k=shipScale(),lx=p.x*k*forms.squash(motion.bank,roll),ly=p.y*k;return {...p,x:player.x+lx*Math.cos(a)-ly*Math.sin(a),y:player.y+lx*Math.sin(a)+ly*Math.cos(a)};}
- function currentLasers(){return forms.laserBeams(power,formTime(),motion).map(p=>({...worldPort(p),width:p.width*shipScale()}));}
+ // tx: where each beam meets the top of the screen. In goddess form the tips trail behind the ship, so the beams sweep like whips.
+ let beamTips=[];
+ function currentLasers(){return forms.laserBeams(power,formTime(),motion).map((p,i)=>{const w=worldPort(p);return {...w,width:p.width*shipScale(),tx:beamTips[i]??w.x};});}
+ function updateBeamTips(dt){const beams=forms.laserBeams(power,formTime(),motion).map(worldPort),lag=route==='laser'&&power>=6&&!reduced;if(beamTips.length!==beams.length)beamTips=beams.map(b=>b.x);beams.forEach((b,i)=>{beamTips[i]=lag?beamTips[i]+(b.x-beamTips[i])*Math.min(1,dt*3):b.x;});}
+ const BEAM_TOP=48,beamX=(b,y)=>b.x+(b.tx-b.x)*(b.y-y)/(b.y-BEAM_TOP);
  function fire(){const w=WEAPON_STEPS[power];stats.shots++;if(route==='spread'){for(const port of forms.spreadMuzzles(power,formTime(),motion)){const p=worldPort(port);shots.push({x:p.x,y:p.y,vx:Math.cos(p.angle)*800,vy:Math.sin(p.angle)*800,damage:w.damage,life:1.6,r:4+power*.18,origin:port.kind});if(port.kind!=='wing'||Math.random()<.3)flashes.push({x:p.x,y:p.y,r:9,life:.06,max:.06,color:palette.spread});}audio.sfx('shot',level);}else audio.sfx('laser',level);}
 
  function movePlayer(dt){
@@ -150,8 +154,8 @@
    if(midboss&&!midboss.dead&&!midboss.leaving&&foes.Sentinel.hitTest(midboss,s.x,s.y,s.r)){s.life=0;addParticles(s.x,s.y,palette[route],3,.4);hurtMid(s.damage);continue;}
    if(boss&&!boss.dead&&!boss.dying){const h=foes.Core.hitTest(boss,s.x,s.y,s.r);if(h){s.life=0;if(h.part==='core'){addParticles(s.x,s.y,palette[route],3,.4);hurtCore(s.damage);}else if(h.part==='pod'){addParticles(s.x,s.y,palette[route],3,.4);hurtPod(h.pod,s.damage);}else clink(s.x,s.y);}}}
   shots=shots.filter(s=>s.life>0&&s.y>-50&&s.x>-40&&s.x<W+40);
-  beamTargets=[];if(route==='laser'){
-   const beams=currentLasers(),dps=WEAPON_STEPS[power].laserDps,load=t=>{let w=0;for(const b of beams)if(t.y<b.y&&Math.abs(t.x-b.x)<t.r+b.width)w+=b.weight;return w;};
+  beamTargets=[];updateBeamTips(dt);if(route==='laser'){
+   const beams=currentLasers(),dps=WEAPON_STEPS[power].laserDps,load=t=>{let w=0;for(const b of beams)if(t.y<b.y&&Math.abs(t.x-beamX(b,t.y))<t.r+b.width)w+=b.weight;return w;};
    for(const e of enemies){if(e.dead||e.y<-20)continue;const w=load(e);if(w){beamTargets.push(e);if(Math.random()<.6)addParticles(e.x+rand(-4,4),e.y+e.r*.5,palette.laser,1,.4);hurt(e,w*dps*dt);}}
    if(midboss&&!midboss.dead&&!midboss.leaving){const t={x:midboss.x,y:midboss.y,r:midboss.r},w=load(t);if(w){beamTargets.push(t);hurtMid(w*dps*dt);}}
    if(boss&&!boss.dead&&!boss.dying){for(const p of boss.pods)if(!p.dead){const w=load(p);if(w){beamTargets.push(p);hurtPod(p,w*dps*dt);}}const w=load(boss.core);if(w&&!boss.dying){beamTargets.push(boss.core);hurtCore(w*dps*dt);}}
@@ -200,7 +204,7 @@
  function draw(dt){ctx=mainCtx;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);drawBackground(dt);if(mode==='menu'||mode==='starting')return;const warp=depthTilt>.002;if(warp){layerCtx.setTransform(1,0,0,1,0,0);layerCtx.clearRect(0,0,layer.width,layer.height);layerCtx.setTransform(dpr,0,0,dpr,0,0);ctx=layerCtx;}ctx.save();if(shake>0&&!reduced)ctx.translate(rand(-shake,shake),rand(-shake,shake));
   drawHazards(false);
   ctx.globalCompositeOperation='lighter';
-  if(route==='laser'&&mode!=='result'&&endingTimer===0){ctx.save();for(const b of currentLasers()){const col=palette.laser;ctx.globalAlpha=.28;glowLine(b.x,b.y,b.x,48,col,b.width*2.2,18);ctx.globalAlpha=.78+Math.sin(visualTime*37)*.08;glowLine(b.x,b.y,b.x,48,col,b.width,15);glowLine(b.x,b.y,b.x,48,'#e8f6ff',Math.max(1.4,b.width*.25),6);}ctx.restore();for(const t of beamTargets)drawGlow(t.x+rand(-3,3),t.y+t.r*.4,16+Math.random()*10+WEAPON_STEPS[power].beam*.6,palette.laser,.85);}
+  if(route==='laser'&&mode!=='result'&&endingTimer===0){ctx.save();for(const b of currentLasers()){const col=palette.laser;ctx.globalAlpha=.28;glowLine(b.x,b.y,b.tx,BEAM_TOP,col,b.width*2.2,18);ctx.globalAlpha=.78+Math.sin(visualTime*37)*.08;glowLine(b.x,b.y,b.tx,BEAM_TOP,col,b.width,15);glowLine(b.x,b.y,b.tx,BEAM_TOP,'#e8f6ff',Math.max(1.4,b.width*.25),6);}ctx.restore();for(const t of beamTargets)drawGlow(t.x+rand(-3,3),t.y+t.r*.4,16+Math.random()*10+WEAPON_STEPS[power].beam*.6,palette.laser,.85);}
   ctx.lineCap='round';for(const tr of tipTrail)for(let i=1;i<tr.length;i++){const k=1-i/tr.length;ctx.globalAlpha=k*.5;ctx.strokeStyle=palette[route];ctx.lineWidth=k*3.4;ctx.beginPath();ctx.moveTo(tr[i-1].x,tr[i-1].y);ctx.lineTo(tr[i].x,tr[i].y);ctx.stroke();}ctx.globalAlpha=1;ctx.lineCap='butt';
   for(const g of ghosts){ctx.globalAlpha=g.life/.22*.22;forms.draw(ctx,{route,power,time:visualTime,x:g.x,y:g.y,scale:shipScale(),tilt:g.tilt,reduced,bank:g.bank,motion});}ctx.globalAlpha=1;
   for(const s of shots){drawSprite(bulletSprite(palette.spread,Math.round(s.r*1.5)/2,'needle'),s.x,s.y,Math.atan2(s.vy,s.vx));}
