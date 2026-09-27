@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>RINKOU-燐光- — 音で、覚醒する。</title>
+<meta name="description" content="音楽とともに進化するスペースシューティング。放射弾とレーザー、２つのルートと６つのサウンド。">
+<meta name="theme-color" content="#050b13">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23050b13' d='M0 0h32v32H0z'/%3E%3Cpath fill='%2366ffe3' d='M16 3 29 27 16 21 3 27z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="app">
+ <div class="space-art" aria-hidden="true"></div><canvas id="game" aria-label="シューティングゲームのプレイエリア"></canvas><div class="vignette" aria-hidden="true"></div>
+ <header class="topbar"><a class="brand" href="#" id="home" aria-label="RINKOU-燐光- タイトル画面">✦ <span>RINKOU-燐光-</span><small>01 / NEBULA SECTOR</small></a><div class="top-actions"><button id="soundToggle" class="icon-button" aria-label="サウンドをミュート" title="サウンド">♪ <span id="soundLabel">SOUND ON</span></button><button id="pauseButton" class="icon-button hidden" aria-label="一時停止">Ⅱ</button><button id="fullscreen" class="icon-button" aria-label="全画面表示" title="全画面表示">⛶</button></div></header>
+ <section id="menu" class="menu">
+  <div class="eyebrow"><span></span> MUSIC-DRIVEN SPACE SHOOTER</div>
+  <h1>RINKOU<span class="jp-title">燐光</span></h1>
+  <p class="tagline">音で、覚醒する。</p>
+  <p class="intro">アイテムを取れ。音楽を変えろ。<br>９段階の進化、５つの宙域、３つの音楽。</p>
+  <fieldset class="route-picker"><legend>SELECT YOUR WEAPON <span>機体を選択</span></legend>
+   <label class="route selected"><input type="radio" name="route" value="spread" checked><span class="route-symbol">⋔</span><span><b>SPREAD</b><small>放射弾 / 広範囲を制圧</small></span><span class="route-dot"></span></label>
+   <label class="route"><input type="radio" name="route" value="laser"><span class="route-symbol laser-symbol">Ⅱ</span><span><b>LASER</b><small>レーザー / 一直線に貫通</small></span><span class="route-dot"></span></label>
+  </fieldset>
+  <button id="startButton" class="launch">出撃する <span>LAUNCH MISSION ↗</span></button>
+  <button id="evolutionButton" class="evolution-link">９段階の進化を見る <span>EVOLUTION ↗</span></button>
+  <p id="soundNote" class="sound-note" aria-live="polite">ヘッドホン推奨 · SPREAD / LASER オリジナル６曲を収録</p>
+ </section>
+ <div id="shipLabel" class="ship-label"><span>RK–01</span><b id="shipName">SPECTRA</b><small>SPREAD-TYPE INTERCEPTOR</small><div class="spec-line"></div></div>
+ <section id="hud" class="hud hidden" aria-label="ゲームステータス"><div><small>SCORE</small><strong id="score">000000</strong><span id="combo"></span><span id="formName" class="form-name">SPREAD 1.0 / 燐光の機体</span></div><div class="mission-progress"><small id="sectorLabel">SECTOR 01 / NEBULA APPROACH</small><div><i id="progress"></i></div></div><div class="hull"><small>SHIELD</small><strong id="lives">◆ ◆ ◆</strong></div></section>
+ <div id="bossHud" class="boss-hud hidden"><span>WARNING / OBSIDIAN CORE</span><div><i id="bossHealth"></i></div></div>
+ <div id="enemyIntro" class="enemy-intro" aria-live="polite"><small>NEW CONTACT</small><div><b></b><span></span></div><p></p></div>
+ <div id="announcement" class="announcement" aria-live="polite"><small></small><strong></strong></div>
+ <button id="bombButton" class="bomb-button hidden" aria-label="ボムを使用"><span class="bomb-icon">✺</span><span>BOMB <b id="bombCount">03</b><small>右クリック / TAP / SPACE</small></span></button>
+ <div id="pickupHint" class="pickup-hint hidden">P パワーアップ <span>／</span> B ボム補充 <span>／</span> ＋ シールド回復</div>
+ <footer class="bottom-bar"><div id="controlsHint" class="controls-hint"><span>MOVE <b>マウス / ドラッグ</b></span><span>BOMB <b>右クリック / タップ</b></span><span>FIRE <b>AUTO</b></span></div><div class="music-display"><div class="equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="music-meta"><small id="musicCaption">SOUND VISUALIZER / READY</small><span id="powerStatus">9段階の強化 / Pは30秒ごと</span></div><div class="level-bars" aria-label="パワーレベル"><i class="active"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></footer>
+ <dialog id="pauseDialog"><div class="dialog-eyebrow">MISSION PAUSED</div><h2>ひと休み。</h2><p>準備ができたら、続きを。</p><label class="volume-label">音量 <input id="volume" type="range" min="0" max="100" value="65"><span id="volumeValue">65%</span></label><label class="volume-label voice-volume">ボイス <input id="voiceVolume" type="range" min="0" max="100" value="90"><span id="voiceVolumeValue">90%</span></label><button id="resumeButton" class="launch">戦闘に戻る <span>RESUME ↗</span></button><button id="quitButton" class="text-button">タイトルに戻る</button></dialog>
+ <dialog id="resultDialog"><div id="resultEyebrow" class="dialog-eyebrow">MISSION COMPLETE</div><h2 id="resultTitle">星の先へ。</h2><p id="resultText"></p><div class="result-score"><small>FINAL SCORE</small><strong id="finalScore"></strong></div><div class="result-details"><span>撃破 <b id="killsResult"></b></span><span>最大コンボ <b id="comboResult"></b></span><span>到達レベル <b id="levelResult"></b></span></div><button id="retryButton" class="launch">もう一度出撃 <span>RETRY ↗</span></button><button id="returnButton" class="text-button">機体を選び直す</button></dialog>
+ <dialog id="evolutionDialog" aria-labelledby="evolutionTitle">
+  <div class="evolution-heading"><div><div class="dialog-eyebrow">EVOLUTION ARCHIVE</div><h2 id="evolutionTitle">光は、姿を変える。</h2></div><button id="evolutionClose" class="icon-button" aria-label="進化プレビューを閉じる">×</button></div>
+  <div class="evolution-routes" role="group" aria-label="進化を見る武器"><button id="previewSpread" aria-pressed="true">SPREAD <span>翠光の火の鳥</span></button><button id="previewLaser" aria-pressed="false">LASER <span>蒼光の女神</span></button></div>
+  <div class="evolution-stage"><canvas id="evolutionCanvas" width="760" height="350" aria-label="機体の進化と攻撃のアニメーション"></canvas><div class="evolution-caption"><b id="evolutionVersion"></b><span id="evolutionName"></span></div></div>
+  <div id="evolutionSteps" class="evolution-steps" role="group" aria-label="パワーバージョンを選択"><button data-power="0" aria-pressed="true">1.0</button><button data-power="1" aria-pressed="false">1.3</button><button data-power="2" aria-pressed="false">1.6</button><button data-power="3" aria-pressed="false">2.0</button><button data-power="4" aria-pressed="false">2.3</button><button data-power="5" aria-pressed="false">2.6</button><button data-power="6" aria-pressed="false">3.0</button><button data-power="7" aria-pressed="false">3.3</button><button data-power="8" aria-pressed="false">3.6</button></div>
+  <div class="evolution-info" aria-live="polite"><strong id="evolutionShape"></strong><p id="evolutionAttack"></p><small id="evolutionMusic"></small></div>
+  <p class="evolution-note">番号を選ぶと、姿・攻撃・背景の速度を比較できます。<br>音楽は2.0・3.0で切り替わり、小数点の強化では続けて流れます。</p>
+ </dialog>
+ <div id="toast" role="status"></div>
+</main>
+<script src="audio.js"></script><script src="forms.js"></script><script src="stage.js"></script><script src="enemies.js"></script><script src="evolution.js"></script><script src="game.js"></script>
+</body></html>
