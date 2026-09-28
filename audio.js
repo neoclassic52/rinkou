@@ -16,7 +16,7 @@
  // Announcer lines (Higgsfield Seed Audio, voice "Xenia", echo baked in).
  const VOICES=['start','speedup','powerup','evolution','phoenix','goddess','maxpower','bomb','warning','sector','shield','lastshield','clear','gameover','bombget','shieldget'];
  // Recorded effects (sfx/se_*.wav): game sound name -> [file, gain]. Anything without a file uses the synth below.
- const SFX={shot:['shot',.2],laser:['laser',.3],explosion:['explosion_s',.5],boom:['explosion_l',.8],power:['evolution',.85],upgrade:['powerup',.6],pickup:['item',.55],bomb:['bomb',.9],damage:['damage',.8],warning:['warning',.5],clear:['clear',.8],clink:['clink',.45],charge:['charge',.45],beam:['beam',.6],whoosh:['sector',.55],gem:['gem',.3],phase:['phase',.85],bossdown:['boss_down',1]};
+ const SFX={shot:['shot',.2],explosion:['explosion_s',.5],boom:['explosion_l',.8],power:['levelup',.9],upgrade:['powerup',.6],pickup:['item',.55],bomb:['bomb',.9],damage:['damage',.8],warning:['warning',.42],clear:['clear',.8],clink:['clink',.45],charge:['charge',.45],beam:['beam',.6],whoosh:['sector',.55],gem:['gem',.3],phase:['phase',.85],bossdown:['boss_down',1]};
  const SFX_GAP={explosion:.03,boom:.05,clink:.06};
  const A={ready:false,sfxBuffers:new Map(),sfxLast:{},laserSrc:null,voiceVolume:.9,voiceBuffers:new Map(),voiceUntil:0,voicePriority:0,voiceSource:null,muted:false,volume:.65,route:'spread',level:0,playing:false,custom:{},timer:null,ctx:null,scores,
   buffers:new Map(),musicSources:[],trackRequest:0,spectrum:new Float32Array(24),
@@ -44,12 +44,6 @@
    if(!embedded&&location.protocol==='file:')return;
    for(const file of new Set(Object.values(SFX).map(v=>v[0]))){const src=embedded?.[file]||`sfx/se_${file}.wav`;fetch(src).then(r=>{if(!r.ok)throw Error('sfx');return r.arrayBuffer();}).then(b=>this.ctx.decodeAudioData(b)).then(buf=>this.sfxBuffers.set(file,buf)).catch(()=>{});}
   },
-  // While the beam fires, the laser sound pulses once every 0.5 s rather than droning continuously.
-  laserHum(level){
-   const buf=this.sfxBuffers.get(SFX.laser[0]);if(!buf)return false;const c=this.ctx,t=c.currentTime;if(t-(this.laserLast??-9)<.44)return true;this.laserLast=t;
-   const s=c.createBufferSource(),g=c.createGain();s.buffer=buf;s.playbackRate.value=1+level*.04;g.gain.value=SFX.laser[1];s.connect(g);g.connect(this.fx);s.start(t);this.laserSrc=s;this.laserGain=g;s.onended=()=>{s.disconnect();g.disconnect();if(this.laserSrc===s)this.laserSrc=null;};return true;
-  },
-  stopLaser(){if(!this.laserSrc)return;const s=this.laserSrc,g=this.laserGain,t=this.ctx.currentTime;this.laserSrc=null;g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(0,t,.03);try{s.stop(t+.2);}catch{}},
   loadVoices(){
    if(this.voicesRequested)return;this.voicesRequested=true;const embedded=window.RinkouVoiceConfig;
    if(!embedded&&location.protocol==='file:')return;
@@ -132,7 +126,6 @@
    if(lvl===2&&p%4===2)this.tone(hz(s.root+24+s.scale[p%4]),t,d*.8,.06,'sine');
   },
   sfx(kind,level=0){if(!this.ready||this.ctx.state!=='running')return;const t=this.ctx.currentTime,b=this.fx;
-   if(kind==='laser'&&this.laserHum(level))return;
    const rec=SFX[kind],buf=rec&&this.sfxBuffers.get(rec[0]);
    if(buf){const gap=SFX_GAP[kind]||0;if(gap&&t-(this.sfxLast[kind]??-1)<gap)return;this.sfxLast[kind]=t;const s=this.ctx.createBufferSource(),g=this.ctx.createGain();s.buffer=buf;if(kind==='shot')s.playbackRate.value=1+level*.05;g.gain.value=rec[1];s.connect(g);g.connect(b);s.start(t);s.onended=()=>{s.disconnect();g.disconnect();};return;}
    if(kind==='shot')this.tone(1000+level*150,t,.055,.024,'triangle',b,330);
@@ -155,7 +148,10 @@
   },
   clearMusic(){if(this.timer){clearInterval(this.timer);this.timer=null;}for(const source of this.musicSources){source.stop(this.ctx.currentTime+.06);}this.musicSources=[];if(this.bus&&this.ctx){const old=this.bus;old.gain.cancelScheduledValues(this.ctx.currentTime);old.gain.setTargetAtTime(.0001,this.ctx.currentTime,.012);setTimeout(()=>old.disconnect(),250);this.bus=null;}},
   stopMusic(){this.trackRequest++;this.clearMusic();},
-  stop(){this.playing=false;this.stopMusic();if(this.ctx)this.stopLaser();},
+  stop(){this.playing=false;this.stopMusic();this.stopAlarm();},
+  // The recorded alarm is a long siren: play it only for the warning band, then fade it out.
+  alarm(seconds){if(!this.ready||this.ctx.state!=='running')return;const buf=this.sfxBuffers.get('warning');if(!buf){this.sfx('warning');return;}this.stopAlarm();const c=this.ctx,t=c.currentTime,s=c.createBufferSource(),g=c.createGain(),end=t+Math.min(seconds,buf.duration);s.buffer=buf;g.gain.setValueAtTime(SFX.warning[1],t);g.gain.setValueAtTime(SFX.warning[1],end-.5);g.gain.linearRampToValueAtTime(0,end);s.connect(g);g.connect(this.fx);s.start(t);s.stop(end+.05);s.onended=()=>{s.disconnect();g.disconnect();if(this.alarmSrc===s)this.alarmSrc=null;};this.alarmSrc=s;},
+  stopAlarm(){if(this.alarmSrc){try{this.alarmSrc.stop();}catch{}this.alarmSrc=null;}},
   pause(){if(this.ctx)this.ctx.suspend();},
   resume(){if(this.ctx){this.next=this.ctx.currentTime+.05;this.ctx.resume();}},
   setVolume(v){this.volume=Math.max(0,Math.min(1,v));if(this.master)this.master.gain.setTargetAtTime(this.muted?0:this.volume*.52,this.ctx.currentTime,.03);},
