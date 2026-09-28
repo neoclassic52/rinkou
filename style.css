@@ -33,3 +33,14 @@
 .volume-label.voice-volume{margin-top:14px}
 /* Ending cinematic: chrome fades away, a quiet skip hint stays. */
 body.ending .topbar,body.ending .bottom-bar{opacity:0;pointer-events:none;transition:opacity 1.2s}.ending-skip{position:absolute;right:4%;bottom:3%;font-size:12px;letter-spacing:2px;color:#ffffff70;pointer-events:none;z-index:4}
+/* Sound room: seven tracks with a live visualizer. */
+#soundRoom{width:640px;max-width:calc(100vw - 28px);max-height:calc(100dvh - 28px);padding:25px;overflow:auto;background:#08151bef;border-color:#8db8bc55}#soundRoom h2{font-size:23px;letter-spacing:2px;margin:8px 0 0}
+.sr-bars{display:grid;grid-template-columns:repeat(40,1fr);align-items:end;gap:3px;height:52px;margin:16px 0 10px}.sr-bars i{display:block;height:3px;background:linear-gradient(0deg,#6fe0c066,#c8fff0);border-radius:1px 1px 0 0;transition:height .06s linear}
+.sr-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}.sr-list li{position:relative;--c:#a0ff83}
+.sr-row{width:100%;display:grid;grid-template-columns:34px 1fr auto 30px;align-items:center;gap:12px;padding:11px 14px 13px;background:#10222b;border:1px solid #ffffff1c;border-left:3px solid var(--c);text-align:left;transition:background .15s}.sr-row:hover{background:#163039}
+.sr-no{font:600 18px 'Barlow Condensed',sans-serif;color:var(--c);letter-spacing:1px}.sr-title b{display:block;font-size:15px;font-weight:600;letter-spacing:1px}.sr-title small{display:block;font:500 11px 'Barlow Condensed',sans-serif;letter-spacing:1.6px;color:#9fb6c2;margin-top:2px}
+.sr-time{font:500 13px 'Barlow Condensed',sans-serif;letter-spacing:1px;color:#b9cbd4;white-space:nowrap}.sr-icon{font-size:14px;color:var(--c);text-align:center}
+.sr-progress{position:absolute;left:3px;right:0;bottom:0;height:2px;background:#ffffff10;pointer-events:none}.sr-progress i{display:block;height:100%;width:0;background:var(--c);box-shadow:0 0 8px var(--c)}
+.sr-list li.active .sr-row{background:#173640;border-color:var(--c)}.sr-list li.loading .sr-icon{opacity:.4}
+@media(max-width:600px){#soundRoom{padding:16px}.sr-row{grid-template-columns:26px 1fr auto 22px;gap:8px;padding:10px 10px 12px}.sr-title b{font-size:13px}.sr-bars{height:38px;gap:2px}}
+.menu-links{display:flex;gap:18px}.menu-links .evolution-link{flex:1;min-width:0;white-space:nowrap}@media(max-width:600px){.menu-links{gap:12px}.menu-links .evolution-link span{display:none}}

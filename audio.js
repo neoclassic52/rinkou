@@ -64,7 +64,7 @@
   },
   setVoiceVolume(v){this.voiceVolume=Math.max(0,Math.min(1,v));if(this.voiceBus)this.voiceBus.gain.setTargetAtTime(this.voiceVolume,this.ctx.currentTime,.03);},
   readSpectrum(){
-   if(!this.analyser||!this.playing||this.muted||this.volume===0||this.ctx.state!=='running'){this.spectrum.fill(0);return this.spectrum;}
+   if(!this.analyser||(!this.playing&&!this.previewing)||this.muted||this.volume===0||this.ctx.state!=='running'){this.spectrum.fill(0);return this.spectrum;}
    this.analyser.getByteFrequencyData(this.frequencyData);
    for(let i=0;i<this.spectrum.length;i++){const [start,end]=this.spectrumBands[i];let sum=0;for(let j=start;j<end;j++)sum+=this.frequencyData[j];this.spectrum[i]=(sum/((end-start)*255))**1.5;}
    return this.spectrum;
@@ -148,6 +148,13 @@
   },
   clearMusic(){if(this.timer){clearInterval(this.timer);this.timer=null;}for(const source of this.musicSources){source.stop(this.ctx.currentTime+.06);}this.musicSources=[];if(this.bus&&this.ctx){const old=this.bus;old.gain.cancelScheduledValues(this.ctx.currentTime);old.gain.setTargetAtTime(.0001,this.ctx.currentTime,.012);setTimeout(()=>old.disconnect(),250);this.bus=null;}},
   stopMusic(){this.trackRequest++;this.clearMusic();},
+  // Sound room: one streaming <audio> element routed through the master bus (so volume, mute and the visualizer apply).
+  previewPlay(src,onEnd){if(!this.ctx)return Promise.reject(Error('no audio'));
+   if(!this.previewEl){const el=this.previewEl=new Audio();el.preload='auto';const node=this.ctx.createMediaElementSource(el);this.previewGain=this.ctx.createGain();this.previewGain.gain.value=.85;node.connect(this.previewGain);this.previewGain.connect(this.master);}
+   const el=this.previewEl;el.onended=()=>{this.previewing=false;if(onEnd)onEnd();};el.src=src;this.previewing=true;this.ctx.resume();return el.play();},
+  previewToggle(){const el=this.previewEl;if(!el)return;if(el.paused){el.play();this.previewing=true;}else{el.pause();this.previewing=false;}},
+  previewPlaying(){return !!this.previewEl&&!this.previewEl.paused;},
+  previewStop(){if(this.previewEl){this.previewEl.onended=null;this.previewEl.pause();}this.previewing=false;},
   // Ending theme: decoded ahead of time (kept outside the per-tier cache) and played once.
   prepareEnding(){if(this.endingBuffer)return Promise.resolve(this.endingBuffer);if(this.endingPromise)return this.endingPromise;const file=this.custom?.ending?.[0]?.file;if(!this.ready||!file)return Promise.resolve(null);
    this.endingPromise=fetch(file,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('ending');return r.arrayBuffer();}).then(b=>this.ctx.decodeAudioData(b)).then(buf=>this.endingBuffer=buf).catch(()=>{this.endingPromise=null;return null;});return this.endingPromise;},

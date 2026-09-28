@@ -6,7 +6,7 @@
 <meta name="description" content="音楽とともに進化するスペースシューティング。放射弾とレーザー、２つのルートと６つのサウンド。">
 <meta name="theme-color" content="#050b13">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23050b13' d='M0 0h32v32H0z'/%3E%3Cpath fill='%2366ffe3' d='M16 3 29 27 16 21 3 27z'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="style.css?v=202609281448">
+<link rel="stylesheet" href="style.css?v=202609280857">
 </head>
 <body>
 <main id="app">
@@ -22,7 +22,7 @@
    <label class="route"><input type="radio" name="route" value="laser"><span class="route-symbol laser-symbol">Ⅱ</span><span><b>LASER</b><small>レーザー / 一直線に貫通</small></span><span class="route-dot"></span></label>
   </fieldset>
   <button id="startButton" class="launch">出撃する <span>LAUNCH MISSION ↗</span></button>
-  <button id="evolutionButton" class="evolution-link">９段階の進化を見る <span>EVOLUTION ↗</span></button>
+  <div class="menu-links"><button id="evolutionButton" class="evolution-link">９段階の進化を見る <span>EVOLUTION ↗</span></button><button id="soundRoomButton" class="evolution-link">♪ サウンドルーム <span>SOUND ROOM ↗</span></button></div>
   <p id="soundNote" class="sound-note" aria-live="polite">ヘッドホン推奨 · SPREAD / LASER オリジナル６曲を収録</p>
  </section>
  <div id="shipLabel" class="ship-label"><span>RK–01</span><b id="shipName">SPECTRA</b><small>SPREAD-TYPE INTERCEPTOR</small><div class="spec-line"></div></div>
@@ -43,8 +43,14 @@
   <div class="evolution-info" aria-live="polite"><strong id="evolutionShape"></strong><p id="evolutionAttack"></p><small id="evolutionMusic"></small></div>
   <p class="evolution-note">番号を選ぶと、姿・攻撃・背景の速度を比較できます。<br>音楽は2.0・3.0で切り替わり、小数点の強化では続けて流れます。</p>
  </dialog>
+ <dialog id="soundRoom" aria-labelledby="soundRoomTitle">
+  <div class="evolution-heading"><div><div class="dialog-eyebrow">SOUND ROOM</div><h2 id="soundRoomTitle">燐光の音楽</h2></div><button id="soundRoomClose" class="icon-button" aria-label="サウンドルームを閉じる">×</button></div>
+  <div id="soundRoomBars" class="sr-bars" aria-hidden="true"></div>
+  <ol id="soundRoomList" class="sr-list"></ol>
+  <p class="evolution-note">曲名を押すと再生、もう一度押すと一時停止します。最後まで流れると次の曲へ進みます。</p>
+ </dialog>
  <div id="endingSkip" class="ending-skip hidden">クリック / タップでスキップ</div>
  <div id="toast" role="status"></div>
 </main>
-<script src="audio.js?v=202609281448"></script><script src="forms.js?v=202609281448"></script><script src="stage.js?v=202609281448"></script><script src="enemies.js?v=202609281448"></script><script src="ending.js?v=202609281448"></script><script src="evolution.js?v=202609281448"></script><script src="game.js?v=202609281448"></script>
+<script src="audio.js?v=202609280857"></script><script src="forms.js?v=202609280857"></script><script src="stage.js?v=202609280857"></script><script src="enemies.js?v=202609280857"></script><script src="ending.js?v=202609280857"></script><script src="soundroom.js?v=202609280857"></script><script src="evolution.js?v=202609280857"></script><script src="game.js?v=202609280857"></script>
 </body></html>
