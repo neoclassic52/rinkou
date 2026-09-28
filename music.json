@@ -2,11 +2,11 @@
   "spread": [
     {"name":"燐光前半１","file":"music/spread-1-intro.mp3","loopFile":"music/spread-1-loop.mp3"},
     {"name":"燐光前半２","file":"music/spread-2-loop.mp3"},
-    {"name":"燐光前半３","file":"music/spread-3-intro.mp3","loopFile":"music/spread-3-loop.mp3"}
+    {"name":"燐光前半３","file":"music/spread-3-intro.mp3","loopFile":"music/spread-3-loop.mp3","gain":1.2}
   ],
   "laser": [
     {"name":"燐光後半１","file":"music/laser-1-loop.mp3"},
     {"name":"燐光後半２","file":"music/laser-2-intro.mp3","loopFile":"music/laser-2-loop.mp3"},
-    {"name":"燐光後半３","file":"music/laser-3-intro.mp3","loopFile":"music/laser-3-loop.mp3"}
+    {"name":"燐光後半３","file":"music/laser-3-intro.mp3","loopFile":"music/laser-3-loop.mp3","gain":1.2}
   ]
 }

@@ -16,7 +16,7 @@
  // Announcer lines (Higgsfield Seed Audio, voice "Xenia", echo baked in).
  const VOICES=['start','speedup','powerup','evolution','phoenix','goddess','maxpower','bomb','warning','sector','shield','lastshield','clear','gameover','bombget','shieldget'];
  // Recorded effects (sfx/se_*.wav): game sound name -> [file, gain]. Anything without a file uses the synth below.
- const SFX={shot:['shot',.2],explosion:['explosion_s',.5],boom:['explosion_l',.8],power:['levelup',.9],upgrade:['powerup',.6],pickup:['item',.55],bomb:['bomb',.9],damage:['damage',.8],warning:['warning',.42],clear:['clear',.8],clink:['clink',.45],charge:['charge',.45],beam:['beam',.6],whoosh:['sector',.55],gem:['gem',.3],phase:['phase',.85],bossdown:['boss_down',1]};
+ const SFX={shot:['shot',.2],explosion:['explosion_s',.5],boom:['explosion_l',.8],power:['levelup',.9],upgrade:['powerup',.6],pickup:['item',.55],bomb:['bomb',.9],damage:['damage',.8],warning:['warning',1.1],clear:['clear',.8],clink:['clink',.45],charge:['charge',.45],beam:['beam',.6],whoosh:['sector',.55],gem:['gem',.3],phase:['phase',.85],bossdown:['boss_down',1]};
  const SFX_GAP={explosion:.03,boom:.05,clink:.06};
  const A={ready:false,sfxBuffers:new Map(),sfxLast:{},laserSrc:null,voiceVolume:.9,voiceBuffers:new Map(),voiceUntil:0,voicePriority:0,voiceSource:null,muted:false,volume:.65,route:'spread',level:0,playing:false,custom:{},timer:null,ctx:null,scores,
   buffers:new Map(),musicSources:[],trackRequest:0,spectrum:new Float32Array(24),
@@ -60,7 +60,7 @@
    const s=c.createBufferSource();s.buffer=buf;s.connect(this.voiceBus);s.start(t);s.onended=()=>s.disconnect();
    this.voiceSource=s;this.voicePriority=priority;this.voiceUntil=t+buf.duration;
    // Duck the music a little so the line reads over it, then let it swell back.
-   if(this.bus){const g=this.bus.gain;g.cancelScheduledValues(t);g.setTargetAtTime(.5,t,.05);g.setTargetAtTime(.72,t+Math.max(.35,buf.duration-.6),.3);}
+   if(this.bus){const g=this.bus.gain;g.cancelScheduledValues(t);const lv=this.musicLevel||.72;g.setTargetAtTime(lv*.7,t,.05);g.setTargetAtTime(lv,t+Math.max(.35,buf.duration-.6),.3);}
   },
   setVoiceVolume(v){this.voiceVolume=Math.max(0,Math.min(1,v));if(this.voiceBus)this.voiceBus.gain.setTargetAtTime(this.voiceVolume,this.ctx.currentTime,.03);},
   readSpectrum(){
@@ -90,7 +90,7 @@
    const request=++this.trackRequest,files=this.trackFiles(route,level);this.playing=true;
    const begin=buffers=>{
     if(request!==this.trackRequest||!this.playing)return;
-    this.clearMusic();this.bus=this.ctx.createGain();this.bus.gain.value=.72;this.bus.connect(this.master);this.step=0;this.next=this.ctx.currentTime+.06;
+    this.clearMusic();this.musicLevel=.72*(this.custom?.[route]?.[level]?.gain||1);this.bus=this.ctx.createGain();this.bus.gain.value=this.musicLevel;this.bus.connect(this.master);this.step=0;this.next=this.ctx.currentTime+.06;
     if(buffers){
      const start=this.ctx.currentTime+.025,hasIntro=files[0]!==files[1];
      const source=(buffer,when,loop)=>{
@@ -150,7 +150,7 @@
   stopMusic(){this.trackRequest++;this.clearMusic();},
   stop(){this.playing=false;this.stopMusic();this.stopAlarm();},
   // The recorded alarm is a long siren: play it only for the warning band, then fade it out.
-  alarm(seconds){if(!this.ready||this.ctx.state!=='running')return;const buf=this.sfxBuffers.get('warning');if(!buf){this.sfx('warning');return;}this.stopAlarm();const c=this.ctx,t=c.currentTime,s=c.createBufferSource(),g=c.createGain(),end=t+Math.min(seconds,buf.duration);s.buffer=buf;g.gain.setValueAtTime(SFX.warning[1],t);g.gain.setValueAtTime(SFX.warning[1],end-.5);g.gain.linearRampToValueAtTime(0,end);s.connect(g);g.connect(this.fx);s.start(t);s.stop(end+.05);s.onended=()=>{s.disconnect();g.disconnect();if(this.alarmSrc===s)this.alarmSrc=null;};this.alarmSrc=s;},
+  alarm(seconds){if(!this.ready||this.ctx.state!=='running')return;const buf=this.sfxBuffers.get('warning');if(!buf){this.sfx('warning');return;}this.stopAlarm();const c=this.ctx,t=c.currentTime,s=c.createBufferSource(),g=c.createGain(),end=t+Math.min(seconds,buf.duration);s.buffer=buf;g.gain.setValueAtTime(SFX.warning[1],t);g.gain.setValueAtTime(SFX.warning[1],end-.5);g.gain.linearRampToValueAtTime(0,end);s.connect(g);g.connect(this.master);s.start(t);s.stop(end+.05);if(this.bus){const mg=this.bus.gain,lv=this.musicLevel||.72;mg.cancelScheduledValues(t);mg.setTargetAtTime(lv*.55,t,.08);mg.setTargetAtTime(lv,end-.3,.3);};s.onended=()=>{s.disconnect();g.disconnect();if(this.alarmSrc===s)this.alarmSrc=null;};this.alarmSrc=s;},
   stopAlarm(){if(this.alarmSrc){try{this.alarmSrc.stop();}catch{}this.alarmSrc=null;}},
   pause(){if(this.ctx)this.ctx.suspend();},
   resume(){if(this.ctx){this.next=this.ctx.currentTime+.05;this.ctx.resume();}},
