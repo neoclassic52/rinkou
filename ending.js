@@ -128,7 +128,7 @@
   // Captions and the closing title are drawn steady (no shake).
   const cap=Math.min(26,W*.05);for(const [a,b,str] of LINES){const al=win(a,a+1,t)*(1-win(b-1,b,t));if(al>0)text(c,W,H,str,H*.9,cap,al,'500');}
   const ti=win(68.5,70.5,t)*(1-win(73,74.8,t));if(ti>0){const big=Math.min(120,W*.16);text(c,W,H,'RINKOU',H*.46,big,ti,'900',S.accent==='#69b7ff'?'#e0f0ff':'#e6ffe0',col);text(c,W,H,'燐 光',H*.46+big*.72,big*.3,ti,'500',col,col);}
-  const out=win(74.4,DURATION,t);if(out>0){c.fillStyle=`rgba(0,0,0,${out})`;c.fillRect(0,0,W,H);}
+  const out=Math.max(win(74.4,DURATION,t),1-win(0,2,t));if(out>0){c.fillStyle=`rgba(0,0,0,${out})`;c.fillRect(0,0,W,H);}
  }
  function stop(){S=null;}
  root.RinkouEnding={DURATION,start,update,draw,done,seek,stop,setClock(fn){if(S)S.clock=fn;},get time(){return S?time():0;}};
