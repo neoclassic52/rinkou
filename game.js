@@ -56,7 +56,12 @@
   catch{if(request===launchRequest){mode=previousMode;toast('音源を読み込めませんでした。通信を確認して、もう一度出撃してください。');}return;}
   finally{if(request===launchRequest){$('startButton').disabled=false;$('retryButton').disabled=false;$('soundNote').textContent=MUSIC_NOTE;}}
   if(request!==launchRequest)return;
-  reset();mode='playing';startedAt=performance.now();$('startButton').disabled=false;document.body.classList.add('playing');['menu','shipLabel'].forEach(id=>setVisible(id,false));['hud','bombButton','pickupHint','pauseButton'].forEach(id=>setVisible(id,true));for(let id of ['pauseDialog','resultDialog'])if($(id).open)$(id).close();updateTrack();updateHud();announce('SECTOR 01 / '+stage.ZONES[0].jp,'FIRST LIGHT',2.4);audio.voice('start',{delay:.35,priority:2});}
+  reset();mode='playing';startedAt=performance.now();$('startButton').disabled=false;document.body.classList.add('playing');['menu','shipLabel'].forEach(id=>setVisible(id,false));['hud','bombButton','pickupHint','pauseButton'].forEach(id=>setVisible(id,true));for(let id of ['pauseDialog','resultDialog'])if($(id).open)$(id).close();updateTrack();updateHud();announce('SECTOR 01 / '+stage.ZONES[0].jp,'FIRST LIGHT',2.4);audio.voice('start',{delay:.35,priority:2});if(TEST)applyTest();}
+ // Test entry points for checking the finale without a full run: ?test=boss | finish | ending
+ const TEST=(location.search.match(/[?&]test=(boss|finish|ending)/)||[])[1]||null;
+ function applyTest(){if(TEST==='ending'){power=MAX_POWER;level=2;startEnding();return;}
+  power=MAX_POWER;level=2;updateTrack(true);player.bombs=5;time=BOSS_START-7;nextPowerAt=Math.ceil(time/POWER_INTERVAL)*POWER_INTERVAL;midDone=true;bossWarning=false;
+  toast(TEST==='finish'?'テストモード：ラスボスの体力が残りわずかの状態で始まります':'テストモード：ラスボス戦の直前から始まります');}
  function home(){launchRequest++;window.RinkouEnding.stop();document.body.classList.remove('ending');$('endingSkip').classList.add('hidden');$('startButton').disabled=false;$('retryButton').disabled=false;$('soundNote').textContent=MUSIC_NOTE;audio.stop();audio.resume();mode='menu';level=0;power=0;acceleration=0;depthTilt=0;$('home').querySelector('small').textContent='01 / NEBULA SECTOR';document.body.classList.remove('playing');['menu','shipLabel'].forEach(id=>setVisible(id,true));['hud','bossHud','bombButton','pickupHint','pauseButton'].forEach(id=>setVisible(id,false));$('announcement').classList.remove('show');$('enemyIntro').classList.remove('show');for(let id of ['pauseDialog','resultDialog'])if($(id).open)$(id).close();enemies=[];bullets=[];shots=[];particles=[];pickups=[];rings=[];flashes=[];gems=[];hazards=[];ghosts=[];tipTrail=[[],[]];boss=null;midboss=null;keys.clear();updateTrack(false);}
  function pause(){if(mode!=='playing')return;mode='paused';audio.pause();keys.clear();touches.clear();activeTouch=null;$('pauseDialog').showModal();}
  function resume(){if(mode!=='paused')return;mode='playing';audio.resume();$('pauseDialog').close();last=performance.now();}
@@ -107,7 +112,7 @@
 
  function spawnMid(){midboss=foes.Sentinel.create(env);setBossHud(foes.Sentinel);announce('WARNING / 月影の番人','TSUKUYOMI',2.6);}
  function killMid(){const m=midboss;if(!m||m.dead)return;m.dead=true;midDone=true;score+=12000;kills++;cancelBullets();explode(m.x,m.y,'#dcc8ff',3.4);for(let i=0;i<6;i++)explode(m.x+rand(-100,100)*m.s,m.y+rand(-50,50)*m.s,'#ffd6f0',1.4);flash=.5;shake=16;bombLight=.8;audio.sfx('bomb');spawnPickup('bomb',m.x-34,m.y);spawnPickup('heal',m.x+34,m.y);announce('SENTINEL DOWN / +12000','月は、沈んだ。',2.2);setVisible('bossHud',false);midboss=null;}
- function spawnBoss(){audio.prepareEnding();enemies.forEach(e=>{if(e.y<0){e.dead=true;e.gone=true;}});boss=foes.Core.create(env);foes.Core.place(boss);setBossHud(foes.Core);announce('WARNING / 宙域の守護者','OBSIDIAN CORE',2.8);}
+ function spawnBoss(){audio.prepareEnding();enemies.forEach(e=>{if(e.y<0){e.dead=true;e.gone=true;}});boss=foes.Core.create(env);if(TEST==='finish')boss.hp=boss.maxHp*.02;foes.Core.place(boss);setBossHud(foes.Core);announce('WARNING / 宙域の守護者','OBSIDIAN CORE',2.8);}
  function killPod(p){if(p.dead)return;p.dead=true;score+=3000;explode(p.x,p.y,'#ff86bd',2.2);audio.sfx('boom');shake=Math.max(shake,8);float(p.x,p.y,'PART DESTROYED +3000','#ffb3d6');}
  function killBoss(){if(!boss||boss.dead||boss.dying)return;boss.dying=true;score+=30000;kills++;cancelBullets();enemies.forEach(e=>kill(e));endingTimer=AFTERMATH;afterE=0;pickups=[];musicFaded=false;player.inv=99;shake=14;flash=.4;audio.sfx('boom');announce('CORE DESTROYED','RADIANCE REMAINS',3);}
 
