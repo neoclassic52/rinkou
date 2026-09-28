@@ -36,18 +36,18 @@
    }
    await this.ctx.resume();
    if(window.RinkouMusicConfig)this.custom=window.RinkouMusicConfig;
-   else if(location.protocol!=='file:'){this.custom=await fetch('music.json').then(r=>{if(!r.ok)throw Error('Music configuration unavailable');return r.json();});}
+   else if(location.protocol!=='file:'){this.custom=await fetch('music.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('Music configuration unavailable');return r.json();});}
    this.configReady=true;this.ready=true;this.loadVoices();this.loadSfx();
   },
   loadSfx(){
    if(this.sfxRequested)return;this.sfxRequested=true;const embedded=window.RinkouSfxConfig;
    if(!embedded&&location.protocol==='file:')return;
-   for(const file of new Set(Object.values(SFX).map(v=>v[0]))){const src=embedded?.[file]||`sfx/se_${file}.wav`;fetch(src).then(r=>{if(!r.ok)throw Error('sfx');return r.arrayBuffer();}).then(b=>this.ctx.decodeAudioData(b)).then(buf=>this.sfxBuffers.set(file,buf)).catch(()=>{});}
+   for(const file of new Set(Object.values(SFX).map(v=>v[0]))){const src=embedded?.[file]||`sfx/se_${file}.wav`;fetch(src,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('sfx');return r.arrayBuffer();}).then(b=>this.ctx.decodeAudioData(b)).then(buf=>this.sfxBuffers.set(file,buf)).catch(()=>{});}
   },
   loadVoices(){
    if(this.voicesRequested)return;this.voicesRequested=true;const embedded=window.RinkouVoiceConfig;
    if(!embedded&&location.protocol==='file:')return;
-   for(const name of VOICES){const src=embedded?.[name]||`voice/vo_${name}.mp3`;fetch(src).then(r=>{if(!r.ok)throw Error('voice');return r.arrayBuffer();}).then(b=>this.ctx.decodeAudioData(b)).then(buf=>this.voiceBuffers.set(name,buf)).catch(()=>{});}
+   for(const name of VOICES){const src=embedded?.[name]||`voice/vo_${name}.mp3`;fetch(src,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('voice');return r.arrayBuffer();}).then(b=>this.ctx.decodeAudioData(b)).then(buf=>this.voiceBuffers.set(name,buf)).catch(()=>{});}
   },
   // A higher-priority line cuts off the current one; equal or lower lines are skipped while it plays.
   voice(name,{delay=0,priority=1}={}){
@@ -79,7 +79,7 @@
    const entry={buffer:null};this.buffers.set(file,entry);
    entry.promise=(async()=>{
     const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);
-    try{const response=await fetch(file,{signal:controller.signal});if(!response.ok)throw Error('Music unavailable');const bytes=await response.arrayBuffer();entry.buffer=await this.ctx.decodeAudioData(bytes);return entry.buffer;}
+    try{const response=await fetch(file,{signal:controller.signal,cache:'no-cache'});if(!response.ok)throw Error('Music unavailable');const bytes=await response.arrayBuffer();entry.buffer=await this.ctx.decodeAudioData(bytes);return entry.buffer;}
     catch(error){if(this.buffers.get(file)===entry)this.buffers.delete(file);throw error;}
     finally{clearTimeout(timeout);}
    })();return entry.promise;
@@ -150,7 +150,7 @@
   stopMusic(){this.trackRequest++;this.clearMusic();},
   // Ending theme: decoded ahead of time (kept outside the per-tier cache) and played once.
   prepareEnding(){if(this.endingBuffer)return Promise.resolve(this.endingBuffer);if(this.endingPromise)return this.endingPromise;const file=this.custom?.ending?.[0]?.file;if(!this.ready||!file)return Promise.resolve(null);
-   this.endingPromise=fetch(file).then(r=>{if(!r.ok)throw Error('ending');return r.arrayBuffer();}).then(b=>this.ctx.decodeAudioData(b)).then(buf=>this.endingBuffer=buf).catch(()=>{this.endingPromise=null;return null;});return this.endingPromise;},
+   this.endingPromise=fetch(file,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('ending');return r.arrayBuffer();}).then(b=>this.ctx.decodeAudioData(b)).then(buf=>this.endingBuffer=buf).catch(()=>{this.endingPromise=null;return null;});return this.endingPromise;},
   fadeOutMusic(seconds){this.trackRequest++;if(!this.bus||!this.ctx)return;const g=this.bus.gain,t=this.ctx.currentTime;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.linearRampToValueAtTime(.0001,t+seconds);clearTimeout(this.fadeTimer);this.fadeTimer=setTimeout(()=>this.stopMusic(),seconds*1000+120);},
   playEnding(){clearTimeout(this.fadeTimer);this.stopMusic();this.stopAlarm();this.playing=true;const buf=this.endingBuffer;if(!buf||!this.ctx)return null;const c=this.ctx,t=c.currentTime+.05;
    this.bus=c.createGain();this.bus.gain.setValueAtTime(.0001,t);this.bus.gain.linearRampToValueAtTime(.8,t+4);this.bus.connect(this.master);const s=c.createBufferSource();s.buffer=buf;s.connect(this.bus);s.start(t);this.musicSources.push(s);s.onended=()=>{s.disconnect();this.musicSources=this.musicSources.filter(x=>x!==s);};return {start:t,duration:buf.duration};},
