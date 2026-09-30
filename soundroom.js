@@ -2,8 +2,9 @@
 (() => {
  'use strict';
  const $=id=>document.getElementById(id),audio=window.PulseAudio,dialog=$('soundRoom'),list=$('soundRoomList'),bars=$('soundRoomBars');
- const ORDER=[['spread',0,'SPREAD · 1.0〜1.6','#a0ff83'],['spread',1,'SPREAD · 2.0〜2.6','#a0ff83'],['spread',2,'SPREAD · 3.0〜3.6','#a0ff83'],
-  ['laser',0,'LASER · 1.0〜1.6','#69b7ff'],['laser',1,'LASER · 2.0〜2.6','#69b7ff'],['laser',2,'LASER · 3.0〜3.6','#69b7ff'],['ending',0,'ENDING','#ffd59b']];
+ // [route, tier, display title, when it plays, colour]
+ const ORDER=[['spread',0,'HOTARU 1.0 — FIRST LIGHT','SPREAD · 1.0〜1.6','#a0ff83'],['spread',1,'HOTARU 2.0 — SWARM','SPREAD · 2.0〜2.6','#a0ff83'],['spread',2,'HOTARU 3.0 — EMERALD PHOENIX','SPREAD · 3.0〜3.6','#a0ff83'],
+  ['laser',0,'KAGERO 1.0 — BLUE MIRAGE','LASER · 1.0〜1.6','#69b7ff'],['laser',1,'KAGERO 2.0 — PARALLEL RAYS','LASER · 2.0〜2.6','#69b7ff'],['laser',2,'KAGERO 3.0 — AZURE GODDESS','LASER · 3.0〜3.6','#69b7ff'],['ending',0,'RINKOU — AFTERGLOW','ENDING','#ffd59b']];
  const fmt=s=>isFinite(s)?Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'):'-:--';
  let tracks=[],current=-1,raf=null;
  for(let i=0;i<40;i++)bars.appendChild(document.createElement('i'));
@@ -29,7 +30,7 @@
   raf=requestAnimationFrame(frame);}
  async function open(){
   try{await audio.init();}catch{}
-  tracks=ORDER.map(([route,i,sub,color])=>{const t=audio.custom?.[route]?.[i];return t&&t.file?{name:route==='ending'?'エンディング':t.name,file:t.file,sub,color}:null;}).filter(Boolean);
+  tracks=ORDER.map(([route,i,name,sub,color])=>{const t=audio.custom?.[route]?.[i];return t&&t.file?{name,file:t.file,sub,color}:null;}).filter(Boolean);
   current=-1;render();dialog.showModal();if(raf===null)raf=requestAnimationFrame(frame);
  }
  $('soundRoomButton').addEventListener('click',open);

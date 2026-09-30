@@ -44,3 +44,6 @@ body.ending .topbar,body.ending .bottom-bar{opacity:0;pointer-events:none;transi
 .sr-list li.active .sr-row{background:#173640;border-color:var(--c)}.sr-list li.loading .sr-icon{opacity:.4}
 @media(max-width:600px){#soundRoom{padding:16px}.sr-row{grid-template-columns:26px 1fr auto 22px;gap:8px;padding:10px 10px 12px}.sr-title b{font-size:13px}.sr-bars{height:38px;gap:2px}}
 .menu-links{display:flex;gap:18px}.menu-links .evolution-link{flex:1;min-width:0;white-space:nowrap}@media(max-width:600px){.menu-links{gap:12px}.menu-links .evolution-link span{display:none}}
+/* English track titles: condensed display face, allowed to wrap on narrow screens. */
+.sr-title b{font-family:'Barlow Condensed','Noto Sans JP',sans-serif;font-size:18px;letter-spacing:1.4px;line-height:1.15}#soundRoom h2#soundRoomTitle{font:700 30px 'Barlow Condensed',sans-serif;letter-spacing:4px}
+@media(max-width:600px){.sr-title b{font-size:15px;letter-spacing:.8px}}
